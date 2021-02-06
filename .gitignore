@@ -1,3 +1,10 @@
 photos/negatives/*
 photos/positives/*
-photoviewer/photoviewer/__pycache__
+django/photoviewer/__pycache__
+.vscode/* 
+!.vscode/settings.json 
+!.vscode/tasks.json 
+!.vscode/launch.json 
+!.vscode/extensions.json 
+.history
+*.pyc
