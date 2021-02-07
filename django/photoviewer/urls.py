@@ -14,11 +14,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-import mmodels.imageendpoint as im
+from django.urls import path, re_path
+import modules.imageendpoint as im
+# import modules.iprocessors
+im.root = "../photos/"
 
+print("run")
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', im.hello),
-    path("test", im.imglmao)
+
+    re_path(r"picture/(?P<album>.+)/(?P<index>\d+)",im.paffedImage),
+
+    re_path(r"picture/(?P<album>.+)",im.paffedAlbum),
+
+    path("picture/", im.albums),
+
 ]
