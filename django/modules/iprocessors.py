@@ -19,7 +19,8 @@ DEFAULTGAMMA = 2.2
 DEFAULTCONF = {
         "saturation":0,
         "whitebalance":0,
-        "hash":0
+        "hash":0,
+        "images":0,
     }
 def dirsize(direct):
     cum = 0
@@ -36,7 +37,7 @@ def checkHash(direct):
             return "hash" in info and info["hash"] == dirsize(os.path.join(os.path.join(direct, "processed")))
     return False
 
-def processnegativedir(direct):
+def processdir(direct, wpfunc, bpfunc, mfunc):
     #given a directory make a config file and 
     raws = []
     # rpyraws = []
@@ -60,13 +61,16 @@ def processnegativedir(direct):
             ), axis=2) ** (1/DEFAULTGAMMA)
             
             
+            
             raws.append(pog)
     raws=np.asarray(raws)
+
+    conf["images"] = len(raws)
     print("raws loaded")
-    pogawbb = np.percentile(raws[:,::10,::10], 10, (0, 1, 2))
-    pogawbw = np.percentile(raws[:,::10,::10], 99, (0, 1, 2))
+    pogawbb = bpfunc(raws[:, ::10, ::10]) #np.percentile(raws[:,::10,::10], 10, (0, 1, 2))
+    pogawbw = wpfunc(raws[:, ::10, ::10]) #np.percentile(raws[:,::10,::10], 99, (0, 1, 2))
     print("wb calc")
-    raws = (raws-pogawbw)/(pogawbb-pogawbw)
+    raws = (raws-pogawbb)/(pogawbw-pogawbb)
     print("wb'd")
     for i in range(len(raws)):
         sat = 1.5+.01*conf["saturation"]
@@ -84,7 +88,19 @@ def processnegativedir(direct):
 
     return json.dumps(conf)
 
-def processpositivedir(directory):
-    #given a directory make a config file and 
-    pass
+def processnegativedir(direct):
+    return processdir(
+        direct, 
+        lambda raws:np.percentile(raws, 10, (0, 1, 2)),
+        lambda raws:np.percentile(raws, 99, (0, 1, 2)),
+        lambda raws, wp, bp: (raws-bp)/(wp-bp)
+    )
+
+def processpositivedir(direct):
+    return processdir(
+        direct, 
+        lambda raws:np.percentile(raws, 90, (0, 1, 2)),
+        lambda raws:np.percentile(raws, 1, (0, 1, 2)),
+        lambda raws, wp, bp: (raws-bp)/(wp-bp)
+    )
     

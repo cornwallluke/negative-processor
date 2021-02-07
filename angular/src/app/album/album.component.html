@@ -1,1 +1,21 @@
-<p>album works!</p>
+<div class="container-fluid vh-100">
+    <div class="row h-100 w-100">
+        <div class="col h-100 w-100">
+            <div id="carouselid" class="carousel slide mh-100 mw-100" data-bs-ride="carousel">
+                <div class="carousel-inner mh-100 mw-100">
+                    <div class="carousel-item mh-100 mw-100" *ngFor="let im of images; let i = index" [class.active]="!i" data-interval="false">
+                        <img [src]="im[1] ? im[0] : ''" class="d-block mh-100 mw-100" alt="...">
+                    </div>
+                </div>
+                <a class="carousel-control-prev" href="#carouselid" role="button" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+                <span class="visually-hidden">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#carouselid" role="button" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+                <span class="visually-hidden">Next</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

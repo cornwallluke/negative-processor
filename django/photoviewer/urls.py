@@ -27,6 +27,8 @@ urlpatterns = [
 
     re_path(r"picture/(?P<album>.+)",im.paffedAlbum),
 
-    path("picture/", im.albums),
+    re_path(r"picture/", im.albums),
+
+    
 
 ]
