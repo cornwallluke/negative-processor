@@ -16,10 +16,32 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path
 import modules.imageendpoint as im
+import modules.taskqueue as tq
+
+taskQueue = tq.myQ()
+
+taskQueue.startQueue()
+
+# taskQueue.addAction(lambda : print("hello world"))
+# taskQueue.addAction(lambda : print("hello world"))
+# taskQueue.addAction(lambda : print("hello world"))
+
+# from time import sleep 
+# sleep(2)
+
+# taskQueue.addAction(lambda : print("hello world2"))
+
+
+# queue = tq.myQ()
+# queue = tq.myQ()
+
 # import modules.iprocessors
 im.root = "../photos/"
 
-print("run")
+im.taskQ = taskQueue
+
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 

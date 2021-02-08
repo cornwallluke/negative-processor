@@ -37,18 +37,8 @@ def checkHash(direct):
             return "hash" in info and info["hash"] == dirsize(os.path.join(os.path.join(direct, "processed")))
     return False
 
-def processdir(direct, wpfunc, bpfunc, mfunc):
-    #given a directory make a config file and 
+def process(direct, wpfunc, bpfunc, conf):
     raws = []
-    # rpyraws = []
-    conf = DEFAULTCONF.copy()
-    if os.path.isfile(os.path.join(direct, "config.json")):
-        with open(os.path.join(direct,"config.json"), "w") as cfg:
-            loaded = json.loads(cfg.read())
-            for key in conf:
-                conf[key] = key in loaded and loaded[key] or conf[key]
-    #load the raw files
-    # print(conf)
     for i in sorted(glob.glob(os.path.join(direct,"*.NEF"))):
         # print(i)
         with rawpy.imread(i) as raw:
@@ -59,8 +49,6 @@ def processdir(direct, wpfunc, bpfunc, mfunc):
                 convolve((imcopy*(raw.raw_colors_visible%2)), H_G)[:,:,np.newaxis],
                 convolve((imcopy*(raw.raw_colors_visible==2)), H_RB)[:,:,np.newaxis],
             ), axis=2) ** (1/DEFAULTGAMMA)
-            
-            
             
             raws.append(pog)
     raws=np.asarray(raws)
@@ -85,22 +73,38 @@ def processdir(direct, wpfunc, bpfunc, mfunc):
 
     with open(os.path.join(direct,"config.json"), "w") as cfg:
         cfg.write(json.dumps(conf))
+    
+    return conf
 
+    
+
+
+def processdir(direct, wpfunc, bpfunc, taskQ):
+    #given a directory make a config file and 
+    
+    # rpyraws = []
+    conf = DEFAULTCONF.copy()
+    if os.path.isfile(os.path.join(direct, "config.json")):
+        with open(os.path.join(direct,"config.json"), "w") as cfg:
+            loaded = json.loads(cfg.read())
+            for key in conf:
+                conf[key] = key in loaded and loaded[key] or conf[key]
+    taskQ.addAction(lambda : process(direct, wpfunc, bpfunc, conf))
     return json.dumps(conf)
 
-def processnegativedir(direct):
+def processnegativedir(direct, taskQ):
     return processdir(
         direct, 
         lambda raws:np.percentile(raws, 10, (0, 1, 2)),
         lambda raws:np.percentile(raws, 99, (0, 1, 2)),
-        lambda raws, wp, bp: (raws-bp)/(wp-bp)
+        taskQ
     )
 
-def processpositivedir(direct):
+def processpositivedir(direct, taskQ):
     return processdir(
         direct, 
         lambda raws:np.percentile(raws, 90, (0, 1, 2)),
         lambda raws:np.percentile(raws, 1, (0, 1, 2)),
-        lambda raws, wp, bp: (raws-bp)/(wp-bp)
+        taskQ
     )
     

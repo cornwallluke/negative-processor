@@ -9,7 +9,7 @@ mediafolders = [
     ["negatives", iprocessors.processnegativedir],
     ["positives", iprocessors.processpositivedir]
 ]
-
+taskQ = None
 
 
 def list2regx(listy):
@@ -45,7 +45,7 @@ def paffedAlbum(req, album):#returns config file of album if exists else creates
             #             #make  the things
             # else:
             #     #make the things
-            return djhttp.HttpResponse(mediahandler(alpath))
+            return djhttp.HttpResponse(mediahandler(alpath, taskQ))
     return djhttp.HttpResponseNotFound()
     # return djhttp.FileResponse(open(os.path.join(root, "negatives/Norfolk 2002/monkaOMEGA.jpg"), "rb"))
 
