@@ -39,6 +39,9 @@ def checkHash(direct):
 
 def process(direct, wpfunc, bpfunc, conf):
     raws = []
+    print(f"processing {direct}")
+    if checkHash(direct):
+        print("already Processed directory sent for processing")
     for i in sorted(glob.glob(os.path.join(direct,"*.NEF"))):
         # print(i)
         with rawpy.imread(i) as raw:
@@ -89,7 +92,11 @@ def processdir(direct, wpfunc, bpfunc, taskQ):
             loaded = json.loads(cfg.read())
             for key in conf:
                 conf[key] = key in loaded and loaded[key] or conf[key]
+
+    
     taskQ.addAction(lambda : process(direct, wpfunc, bpfunc, conf))
+    
+    conf["images"] = len(glob.glob(os.path.join(direct,"*.NEF")))
     return json.dumps(conf)
 
 def processnegativedir(direct, taskQ):
