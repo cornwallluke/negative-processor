@@ -22,6 +22,18 @@ DEFAULTCONF = {
         "hash":0,
         "images":0,
     }
+
+
+def rawToMat(ppath):
+    with rawpy.imread(ppath) as raw:
+        # rpyraws.append(raw)
+        imcopy = raw.raw_image_visible.copy()
+        pog = np.concatenate((
+            convolve((imcopy*(raw.raw_colors_visible==0)), H_RB)[:,:,np.newaxis],
+            convolve((imcopy*(raw.raw_colors_visible%2)), H_G)[:,:,np.newaxis],
+            convolve((imcopy*(raw.raw_colors_visible==2)), H_RB)[:,:,np.newaxis],
+        ), axis=2) ** (1/DEFAULTGAMMA)
+        return pog
 def dirsize(direct):
     cum = 0
     for _,_, files in os.walk(direct):
@@ -43,34 +55,29 @@ def process(direct, wpfunc, bpfunc, conf):
     if checkHash(direct):
         print("already Processed directory sent for processing")
     for i in sorted(glob.glob(os.path.join(direct,"*.NEF"))):
-        # print(i)
-        with rawpy.imread(i) as raw:
-            # rpyraws.append(raw)
-            imcopy = raw.raw_image_visible.copy()
-            pog = np.concatenate((
-                convolve((imcopy*(raw.raw_colors_visible==0)), H_RB)[:,:,np.newaxis],
-                convolve((imcopy*(raw.raw_colors_visible%2)), H_G)[:,:,np.newaxis],
-                convolve((imcopy*(raw.raw_colors_visible==2)), H_RB)[:,:,np.newaxis],
-            ), axis=2) ** (1/DEFAULTGAMMA)
-            
-            raws.append(pog)
+
+        print(f"loading {i} for whitebalance in {direct}")
+        raws.append(rawToMat(i)[::10, ::10])
     raws=np.asarray(raws)
 
     conf["images"] = len(raws)
     print("raws loaded")
-    pogawbb = bpfunc(raws[:, ::10, ::10]) #np.percentile(raws[:,::10,::10], 10, (0, 1, 2))
-    pogawbw = wpfunc(raws[:, ::10, ::10]) #np.percentile(raws[:,::10,::10], 99, (0, 1, 2))
+    pogawbb = bpfunc(raws) #np.percentile(raws[:,::10,::10], 10, (0, 1, 2))
+    pogawbw = wpfunc(raws) #np.percentile(raws[:,::10,::10], 99, (0, 1, 2))
     print("wb calc")
-    raws = (raws-pogawbb)/(pogawbw-pogawbb)
-    print("wb'd")
-    for i in range(len(raws)):
-        sat = 1.5+.01*conf["saturation"]
-        raws[i] = matplotlib.colors.hsv_to_rgb(matplotlib.colors.rgb_to_hsv(raws[i])*[1, sat, 1])
-        print(f"saturated raw {i}")
+    # raws = (raws-pogawbb)/(pogawbw-pogawbb)
+    # print("wb'd")
     if not os.path.isdir(os.path.join(direct, "processed")):
         os.mkdir(os.path.join(direct, "processed"))
+    ppaths = sorted(glob.glob(os.path.join(direct,"*.NEF")))
     for i in range(len(raws)):
-        imageio.imwrite(os.path.join(direct, "processed", f"generated{i:04}.jpg"), (raws[i]*255).clip(0,255).astype(np.uint8))
+        rawmat = rawToMat(ppaths[i])
+        wbd = (rawmat-pogawbb)/(pogawbw-pogawbb)
+        sat = 1.5+.01*conf["saturation"]
+        towrite = matplotlib.colors.hsv_to_rgb(matplotlib.colors.rgb_to_hsv(wbd)*[1, sat, 1])
+        print(f"saturated raw {i}")
+    
+        imageio.imwrite(os.path.join(direct, "processed", f"generated{i:04}.jpg"), (towrite*255).clip(0,255).astype(np.uint8))
     
     conf["hash"] = dirsize(os.path.join(direct, "processed"))
 
@@ -110,7 +117,7 @@ def processnegativedir(direct, taskQ):
 def processpositivedir(direct, taskQ):
     return processdir(
         direct, 
-        lambda raws:np.percentile(raws, 90, (0, 1, 2)),
+        lambda raws:np.percentile(raws, 99, (0, 1, 2)),
         lambda raws:np.percentile(raws, 1, (0, 1, 2)),
         taskQ
     )
