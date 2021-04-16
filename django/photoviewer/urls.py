@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, re_path
 import modules.imageendpoint as im
+import modules.s3imageendpoint as im2
+import modules.controls as ctl
 import modules.taskqueue as tq
 
 taskQueue = tq.myQ()
@@ -36,20 +38,28 @@ taskQueue.startQueue()
 # queue = tq.myQ()
 
 # import modules.iprocessors
-im.root = "../photos/"
+# im.root = "../photos/"
 
-im.taskQ = taskQueue
+# im.taskQ = taskQueue
 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    re_path(r"picture/(?P<album>.+)/(?P<index>\d+)",im.paffedImage),
+    re_path(r"old/picture/(?P<album>.+)/(?P<index>\d+)",im.paffedImage),
 
-    re_path(r"picture/(?P<album>.+)",im.paffedAlbum),
+    re_path(r"old/picture/(?P<album>.+)",im.paffedAlbum),
 
-    re_path(r"picture/", im.albums),
+    re_path(r"old/picture/", im.albums),
+
+    # re_path(r"picture/(?P<album>.+)/(?P<index>\d+)",im.paffedImage),
+
+    # re_path(r"picture/(?P<album>.+)",im.paffedAlbum),
+
+    re_path(r"picture/", im2.albums),
+
+    re_path(r"upload", ctl.upload),
 
     
 

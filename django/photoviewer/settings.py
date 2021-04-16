@@ -21,7 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '!6_y$@wagp51b$-6aq(rn_3i*^)lzx2+gusf-a)d$yd8vvw_t5'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -121,7 +120,11 @@ USE_TZ = True
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+CSRF_COOKIE_SECURE = False
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 

@@ -17,7 +17,7 @@ from cv2 import cv2
 #     [1, 2, 1]], dtype=np.float64) / 4
 DEFAULTGAMMA = 2.2
 DEFAULTCONF = {
-        "saturation":0,
+        "saturation":-20,
         "whitebalance":0,
         "hash":0,
         "images":0,
@@ -27,10 +27,12 @@ DEFAULTCONF = {
 def rawToMat(ppath):
     with rawpy.imread(ppath) as raw:
         # rpyraws.append(raw)
-        imcopy = raw.raw_image_visible.copy()
-        pog = cv2.demosaicing(raw.raw_image_visible, cv2.COLOR_BayerRG2BGR)
+        # imcopy = raw.raw_image_visible.copy()
+        # pog = cv2.demosaicing(raw.raw_image_visible, cv2.COLOR_BayerRG2BGR)
+        # pog = pog/pog.max()
+        # pog = pog ** (1/DEFAULTGAMMA)
+        pog = raw.postprocess(output_bps=16, user_flip=0)
         pog = pog/pog.max()
-        pog = pog ** (1/DEFAULTGAMMA)
         # pog = np.concatenate((
         #     convolve((imcopy*(raw.raw_colors_visible==0)), H_RB)[:,:,np.newaxis],
         #     convolve((imcopy*(raw.raw_colors_visible%2)), H_G)[:,:,np.newaxis],
@@ -61,6 +63,7 @@ def process(direct, wpfunc, bpfunc, conf):
 
         print(f"loading {i} for whitebalance in {direct}")
         rmat = rawToMat(i)
+        print(rmat.shape)
         raws.append(rmat[500:-500:20, 500:-500:20])
     raws=np.asarray(raws)
 
@@ -79,7 +82,9 @@ def process(direct, wpfunc, bpfunc, conf):
         wbd = (rawmat-pogawbb)/(pogawbw-pogawbb)
         sat = 1.5+.01*conf["saturation"]
 
-        contrasted = 0.2 * wbd + 0.8 * ( wbd - wbd[300:-300, 300:-300].min() )/(wbd[300:-300, 300:-300].max() - wbd[300:-300, 300:-300].min())
+
+        # contrasted = wbd
+        contrasted = 0.1 * wbd + 0.9 * ( wbd - wbd[300:-300, 300:-300].min() )/(wbd[300:-300, 300:-300].max() - wbd[300:-300, 300:-300].min())
         
         # brightnessed = contrasted + wbd.mean() * 0.1
 
@@ -96,6 +101,7 @@ def process(direct, wpfunc, bpfunc, conf):
         print(f"saturated raw {i}")
     
         imageio.imwrite(os.path.join(direct, "processed", f"generated{i:04}.jpg"), (towrite.clip(0, 1)*255).astype(np.uint8))
+        #replace with imencode and s3 shit
     
     conf["hash"] = dirsize(os.path.join(direct, "processed"))
 
@@ -127,8 +133,8 @@ def processdir(direct, wpfunc, bpfunc, taskQ):
 def processnegativedir(direct, taskQ):
     return processdir(
         direct, 
-        lambda raws:np.percentile(raws, 10, (0, 1, 2)),
-        lambda raws:np.percentile(raws, 99, (0, 1, 2)),
+        lambda raws:np.percentile(raws, 0.1, (0, 1, 2)),
+        lambda raws:np.percentile(raws, 99.9, (0, 1, 2)),
         taskQ
     )
 
