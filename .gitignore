@@ -1,5 +1,5 @@
-photos/negatives/*
-photos/positives/*
+photos/*
+
 django/photoviewer/__pycache__
 .vscode/* 
 !.vscode/settings.json 
