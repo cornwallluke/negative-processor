@@ -10,6 +10,8 @@ import glob
 
 from multiprocessing import Pool
 
+import os
+
 raws = []
 ifrraws = []
 
@@ -372,7 +374,7 @@ def cropToThreeVert(vertices, tocrop):
 
     return desired[10: -10, 10: -10]
 
-def processAndSaveImage(raw, ifrraw, i=0):
+def processAndSaveImage(raw, ifrraw, outdir="testing", i=0):
     flipped = normaliseAndInvert(raw)
 
     typedmask = fixDustMask(raw, ifrraw)
@@ -386,10 +388,14 @@ def processAndSaveImage(raw, ifrraw, i=0):
 
     croppedflipped = cropToThreeVert(vertices, dedusted)
 
+    try:
+        os.mkdir(outdir)
+    except:
+        pass
 
-    cv2.imwrite("testing/outputfile"+str(i)+".jpg", cv2.cvtColor(croppedflipped, cv2.COLOR_RGB2BGR))
+    cv2.imwrite(f"{outdir}/outputfile"+str(i)+".jpg", cv2.cvtColor(croppedflipped, cv2.COLOR_RGB2BGR))
 
-def loadfileAndProcess(folderpath, filename, i=0):
+def loadfileAndProcess(folderpath, filename, outdir="testing", i=0):
     # for i in sorted(glob.glob("../photos/positives/France 1976/*.NEF")):
     raw = cv2.imread(f"{folderpath}/normal/{filename}")
 
@@ -404,13 +410,16 @@ def loadfileAndProcess(folderpath, filename, i=0):
 
     ifrraw = np.add.reduce(ifrraw, axis = 2 ) / 3
     
-    processAndSaveImage(raw, ifrraw, i)
+    processAndSaveImage(raw, ifrraw, outdir, i)
 
     return "hi"
 
 
 if __name__ == "__main__":
-    folderpath = "../photos/3abr2000"
+    fkey = "negs 1978"
+
+    folderpath = f"../photos/{fkey}"
+    outdir = f"../photos/procd/{fkey}"
     fnames = listfiles(folderpath)
 
     number = len(fnames)
@@ -423,7 +432,7 @@ if __name__ == "__main__":
         results = [
             pool.apply_async(
                 loadfileAndProcess,
-                (folderpath, fnames[i], i)
+                (folderpath, fnames[i], outdir, i)
             ) for i in range(len(fnames))[:number]
         ]
 
